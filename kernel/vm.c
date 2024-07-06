@@ -5,6 +5,9 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
+
 
 /*
  * the kernel's page table.
@@ -436,4 +439,43 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+// Function to map shared pages from one process to another
+uint64 map_shared_pages(struct proc* src_proc, struct proc* dst_proc, uint64 src_va, uint64 size) {
+
+  // Align size to a multiple of PGSIZE
+  uint64 aligned_size = PGROUNDUP(size);
+
+  // Start mapping from the beginning of the dst_proc unused memory
+  uint64 dst_va = PGROUNDUP(dst_proc->sz);
+  uint64 end_va = dst_va + aligned_size;
+
+  // Iterate through each page to be mapped
+  for (uint64 a = 0; a < aligned_size; a += PGSIZE) {
+
+    // Walk source page table to get physical address corresponding to src_va
+    pte_t *src_pte = walk(src_proc->pagetable, src_va + a, 0);
+
+    if (src_pte == 0 || (*src_pte & PTE_V) == 0 || (*src_pte & PTE_U) == 0) {
+      return -1; // Page can't be shared since it is not in source process or it isn't valid/user accessable
+    }
+
+    // Set physical address and permissions to map to dst_src
+    uint64 pa = PTE2PA(*src_pte);
+    pte_t perm = (*src_pte & (PTE_FLAGS(*src_pte))) | PTE_S; 
+
+    // Map physical address into dst_src
+    if (mappages(dst_proc->pagetable, dst_va + a, PGSIZE, pa, perm) != 0) {
+      // Unmap any mapped pages in case of failure
+      for (uint64 b = 0; b < a; b += PGSIZE)
+        uvmunmap(dst_proc->pagetable, dst_va + b, 1, 1);
+      return -1;
+    }
+  }
+
+  // Update the destination process's size
+  dst_proc->sz = end_va;
+
+  return dst_va;
 }
