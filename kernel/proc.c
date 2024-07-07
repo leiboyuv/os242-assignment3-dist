@@ -688,3 +688,18 @@ procdump(void)
     printf("\n");
   }
 }
+
+// Assignment 3
+
+// Find a process by its PID
+struct proc* find_proc(int pid) {
+  struct proc *p;
+
+  for (p = proc; p < &proc[NPROC]; p++) {
+    if (p->state != UNUSED && p->pid == pid) {  // Process is valid and matches the given PID
+      return p;
+    }
+  }
+
+  return 0;                                     // Process not found
+}
