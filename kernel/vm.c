@@ -444,6 +444,8 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 // Function to map shared pages from one process to another
 uint64 map_shared_pages(struct proc* src_proc, struct proc* dst_proc, uint64 src_va, uint64 size) {
 
+  acquire(&src_proc->lock);
+
   // Align size to be a multiply of a PGSIZE
   uint64 aligned_size = PGROUNDUP(size);
 
