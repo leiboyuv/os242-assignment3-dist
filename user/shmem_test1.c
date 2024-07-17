@@ -12,16 +12,14 @@ int main(int argc, char *argv[]){
 
     if ((pid = fork()) == 0) {
         // Child process 
-        sleep(1); // Wait for parent to share the memory
-        printf("Child process prints: %s\n", shmem);
+
+        char* child_shmem  = (char*)map_shared_pages(getpid(), (void*)shmem, PGSIZE);
+
+        printf("Child process prints: %s\n", child_shmem);
         exit(0);
     }
 
     else {
-
-        //Parent process
-        map_shared_pages(getpid(), pid, (void*)shmem, PGSIZE);    // Share memory with child
-
         wait(0);    // Wait for child to print and exit
         free(shmem);
         exit(0);
