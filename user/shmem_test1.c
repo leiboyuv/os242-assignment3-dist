@@ -6,14 +6,15 @@
 
 
 int main(int argc, char *argv[]){
-    char* shmem = malloc(PGSIZE);
+    char * msg = "Hello child";
+    char* shmem = malloc(strlen(msg));
     int pid;
-    strcpy(shmem, "Hello child");
+    strcpy(shmem, msg);
 
     if ((pid = fork()) == 0) {
         // Child process 
 
-        char* child_shmem  = (char*)map_shared_pages(getpid(), (void*)shmem, PGSIZE);
+        char* child_shmem  = (char*)map_shared_pages(getpid(), (void*)shmem, strlen(msg));
 
         printf("Child process prints: %s\n", child_shmem);
         exit(0);

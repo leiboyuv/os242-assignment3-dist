@@ -511,11 +511,8 @@ unmap_shared_pages(struct proc* p, uint64 addr, uint64 size) {
     uvmunmap(pagetable, a, 1, 0);
   }
  
- // Update the process's size if we unmapped from the end of the address space
- /*if (addr + aligned_size == p->sz) {
-    p->sz = addr;
-  }*/
-  p->sz = p->sz - aligned_size; //must always update the size
+  p->sz = p->sz - aligned_size; // Update process's size
 
   return 0;
 }
+
