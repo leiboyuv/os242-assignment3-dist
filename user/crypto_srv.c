@@ -38,16 +38,14 @@ int main(void) {
         data[i] = data[i] ^ key[j];
         j = (j + 1) % op->key_size;
       }
-      asm volatile("fence rw, rw" : : : "memory");//task2.6
-      op->type = CRYPTO_OP_STATE_DONE;//task2.5
     }
+    asm volatile("fence rw, rw" : : : "memory");//task2.6
+    op->state = CRYPTO_OP_STATE_DONE;//task2.5
 
     if(remove_shared_memory_request(addr, size) == -1){//2.3
       printf("remove has failed\n");
       exit(1);
     }
-
-
   }
   exit(0);
 }
