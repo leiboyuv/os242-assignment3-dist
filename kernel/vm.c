@@ -479,7 +479,7 @@ uint64 map_shared_pages(struct proc* src_proc, struct proc* dst_proc, uint64 src
   // Update the destination process's size
   dst_proc->sz = end_va;
 
-  return dst_va;
+  return dst_va + src_va - PGROUNDDOWN(src_va); //added offset calculation by Daniel
 }
 
 uint64
@@ -488,10 +488,10 @@ unmap_shared_pages(struct proc* p, uint64 addr, uint64 size) {
   uint64 aligned_size = PGROUNDUP(size);
   pagetable_t pagetable = p->pagetable;
   pte_t *pte;
-
-  if (addr % PGSIZE != 0) {
+  addr = PGROUNDDOWN(addr); //start must always be page aligned
+  /*if (addr % PGSIZE != 0) {
     return -1; // Address is not page-aligned
-  }
+  }*/
 
   // Iterate thorough each page needed to be unmapped, check its correctness and unmap it
   for(uint64 a = addr; a < addr + aligned_size; a += PGSIZE){
@@ -511,10 +511,8 @@ unmap_shared_pages(struct proc* p, uint64 addr, uint64 size) {
     uvmunmap(pagetable, a, 1, 0);
   }
  
- // Update the process's size if we unmapped from the end of the address space
-  if (addr + aligned_size == p->sz) {
-    p->sz = addr;
-  }
+  p->sz = p->sz - aligned_size; // Update process's size
 
   return 0;
 }
+
